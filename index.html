@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pyramidal Spectrum (PVQ-VAE) – WACV 2026</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta
+    name="description"
+    content="Pyramidal Spectrum: Frequency-based Hierarchically Vector Quantized VAE for Videos (PVQ-VAE), a frequency-aware video tokenizer with pyramidal vector quantization and lookup-free codebooks."
+  />
+  <style>
+    :root {
+      --bg: #fafafa;
+      --bg-card: #ffffff;
+      --fg: #111827;
+      --fg-muted: #4b5563;
+      --border-subtle: #e5e7eb;
+      --shadow-soft: 0 1px 4px rgba(15, 23, 42, 0.08);
+      --radius-xl: 0.9rem;
+      --accent: #4f46e5;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #020617;
+        --bg-card: #020617;
+        --fg: #e5e7eb;
+        --fg-muted: #9ca3af;
+        --border-subtle: #111827;
+        --shadow-soft: 0 1px 10px rgba(15, 23, 42, 0.9);
+        --accent: #818cf8;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #e5e7eb33, transparent 50%),
+        var(--bg);
+      color: var(--fg);
+      line-height: 1.6;
+    }
+
+    .page {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 4rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.15rem 0.65rem;
+      border-radius: 999px;
+      background: rgba(79, 70, 229, 0.08);
+      border: 1px solid rgba(79, 70, 229, 0.15);
+      color: var(--accent);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.6rem;
+    }
+
+    h1 {
+      font-size: clamp(1.9rem, 3vw, 2.4rem);
+      margin: 0 0 0.5rem;
+    }
+
+    h1 em {
+      font-style: normal;
+      font-weight: 500;
+      color: var(--accent);
+    }
+
+    .subtitle {
+      margin: 0.2rem 0 0.5rem;
+      color: var(--fg-muted);
+      font-size: 0.95rem;
+    }
+
+    .authors,
+    .affiliations {
+      margin: 0.4rem 0;
+      font-size: 0.95rem;
+    }
+
+    .authors span,
+    .affiliations span {
+      white-space: nowrap;
+    }
+
+    .links {
+      margin-top: 0.9rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .links a {
+      text-decoration: none;
+      font-size: 0.88rem;
+      padding: 0.45rem 0.8rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.5);
+      color: var(--fg);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .links a.primary {
+      border-color: transparent;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: #f9fafb;
+    }
+
+    .links a span.icon {
+      font-size: 1rem;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.1fr);
+      gap: 1.75rem;
+      align-items: start;
+    }
+
+    @media (max-width: 880px) {
+      main {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    section {
+      background: var(--bg-card);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-subtle);
+      padding: 1.5rem 1.3rem;
+      box-shadow: var(--shadow-soft);
+      margin-bottom: 1.25rem;
+    }
+
+    section h2 {
+      margin-top: 0;
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    section h2 span {
+      font-size: 1.1rem;
+      opacity: 0.7;
+    }
+
+    p {
+      margin: 0.4rem 0;
+      font-size: 0.96rem;
+    }
+
+    ul {
+      padding-left: 1.2rem;
+      margin: 0.4rem 0;
+      font-size: 0.95rem;
+    }
+
+    li + li {
+      margin-top: 0.18rem;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-top: 0.4rem;
+    }
+
+    .pill {
+      font-size: 0.78rem;
+      padding: 0.18rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.02);
+      color: var(--fg-muted);
+      white-space: nowrap;
+    }
+
+    .figure {
+      margin-top: 0.7rem;
+      text-align: center;
+      font-size: 0.86rem;
+      color: var(--fg-muted);
+    }
+
+    .figure img {
+      max-width: 100%;
+      border-radius: 0.6rem;
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+      gap: 0.6rem;
+      margin-top: 0.7rem;
+    }
+
+    .metric-card {
+      border-radius: 0.75rem;
+      border: 1px solid var(--border-subtle);
+      padding: 0.6rem 0.7rem;
+      font-size: 0.86rem;
+      background: radial-gradient(circle at top left, #e5e7eb33, transparent),
+        var(--bg-card);
+    }
+
+    .metric-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--fg-muted);
+      margin-bottom: 0.2rem;
+    }
+
+    .metric-main {
+      font-weight: 600;
+      font-size: 1.02rem;
+    }
+
+    .metric-sub {
+      font-size: 0.8rem;
+      color: var(--fg-muted);
+      margin-top: 0.15rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+      margin-top: 0.6rem;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--border-subtle);
+      padding: 0.3rem 0.45rem;
+      text-align: center;
+    }
+
+    th {
+      font-weight: 600;
+      background: rgba(15, 23, 42, 0.025);
+    }
+
+    code,
+    pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+      font-size: 0.84rem;
+      background: rgba(15, 23, 42, 0.04);
+      border-radius: 0.6rem;
+    }
+
+    pre {
+      padding: 0.75rem 0.9rem;
+      overflow-x: auto;
+      margin: 0.5rem 0;
+      border: 1px solid var(--border-subtle);
+    }
+
+    footer {
+      margin-top: 2rem;
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--fg-muted);
+    }
+
+    a {
+      color: var(--accent);
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="badge">
+        <span>WACV 2026</span> · <span>Video Generation</span>
+      </div>
+      <h1>
+        Pyramidal Spectrum: Frequency-based Hierarchically Vector Quantized
+        VAE for Videos <em>(PVQ-VAE)</em>
+      </h1>
+      <p class="subtitle">
+        A frequency-aware, pyramidal vector-quantized VAE for high-fidelity,
+        highly-compressed video latents.
+      </p>
+      <p class="authors">
+        <strong>Tushar Prakash</strong><sup>1,6,†</sup>,
+        <strong>Onkar Susladkar</strong><sup>2,†</sup>,
+        <strong>Inderjit S. Dhillon</strong><sup>3,5</sup>,
+        <strong>Sparsh Mittal</strong><sup>4</sup>
+      </p>
+      <p class="affiliations">
+        <sup>1</sup>DTU · <sup>2</sup>UIUC · <sup>3</sup>UT Austin ·
+        <sup>4</sup>IIT Roorkee · <sup>5</sup>Google Research ·
+        <sup>6</sup>Sony Research India
+      </p>
+
+      <div class="links">
+        <!-- TODO: Replace the # with real links (arXiv, video, etc.) -->
+        <a class="primary" href="#" target="_blank" rel="noreferrer">
+          <span class="icon">📄</span>
+          <span>Paper (PDF / arXiv)</span>
+        </a>
+        <a
+          href="https://github.com/CandleLabAI/WACV-2026-VectorVAE-Webpage"
+          target="_blank"
+          rel="noreferrer"
+        >
+          <span class="icon">💻</span>
+          <span>Code &amp; Project Repo</span>
+        </a>
+        <a href="#" target="_blank" rel="noreferrer">
+          <span class="icon">🎥</span>
+          <span>Teaser Video</span>
+        </a>
+        <a href="#" target="_blank" rel="noreferrer">
+          <span class="icon">🖼️</span>
+          <span>Poster / Slides</span>
+        </a>
+        <a href="mailto:tushar121prakash@gmail.com">
+          <span class="icon">✉️</span>
+          <span>Contact</span>
+        </a>
+      </div>
+    </header>
+
+    <main>
+      <!-- LEFT COLUMN -->
+      <div>
+        <section id="abstract">
+          <h2><span>▸</span> Abstract</h2>
+          <p>
+            Modern text-to-video and video generation models rely on strong
+            video VAEs that compress high-dimensional spatiotemporal signals
+            into compact latents. Discrete latent VAEs with vector
+            quantization are particularly attractive for their perceptual
+            sharpness and compatibility with token-based transformers — but
+            current designs lack frequency-domain modeling and use fixed
+            single-resolution quantization, limiting their ability to capture
+            coarse-to-fine video structure.
+          </p>
+          <p>
+            <strong>PVQ-VAE</strong> addresses these limitations with a
+            frequency-aware encoder–decoder and
+            <strong>Pyramidal Vector Quantization</strong>, a hierarchical
+            quantization strategy that discretizes features at multiple
+            resolutions. The encoder integrates
+            <em>Fast Fourier Transform (FFT)</em> and
+            <em>Discrete Wavelet Transform (DWT)</em> to jointly capture
+            global semantics and multi-scale local details, enabling up to
+            <strong>32× spatial</strong> and <strong>16× temporal</strong>
+            compression while preserving sharp textures and motion.
+          </p>
+          <p>
+            PVQ-VAE further employs <em>Lookup-Free Quantization (LFQ)</em>
+            with a large binary codebook, an autoregressive transformer prior
+            over latent tokens, and a cross-modal contrastive loss guided by a
+            pretrained high-resolution image VAE (FLUX) to transfer
+            fine-grained image priors into video. The result is a compact
+            yet expressive video tokenizer that delivers
+            <strong>state-of-the-art reconstruction quality</strong> on
+            WebVid-val, COCO-val, and MCL-JCV under strong compression.
+          </p>
+          <div class="pill-row">
+            <div class="pill">Discrete latent video VAE</div>
+            <div class="pill">FFT + DWT frequency modeling</div>
+            <div class="pill">Pyramidal Vector Quantization</div>
+            <div class="pill">Lookup-Free Quantization (LFQ)</div>
+            <div class="pill">Autoregressive latent prior</div>
+            <div class="pill">FLUX-based 2D supervision</div>
+          </div>
+        </section>
+
+        <section id="method">
+          <h2><span>▸</span> Method Overview</h2>
+          <p>
+            PVQ-VAE is a hierarchical, frequency-aware video VAE that encodes
+            an input video into multi-scale discrete latents. Each encoder
+            block combines three complementary branches:
+          </p>
+          <ul>
+            <li>
+              <strong>FFT branch:</strong> performs per-frame 2D FFT, uses a
+              learnable frequency mixer and temporal convolution to model
+              <em>global scene structure</em>, long-range patterns, and
+              redundant low-frequency content.
+            </li>
+            <li>
+              <strong>DWT branch:</strong> applies orthogonal 2D DWT (Haar)
+              into LL / LH / HL / HH bands to capture
+              <em>scale-aware, localized details</em> such as edges, textures
+              and motion boundaries across multiple resolutions.
+            </li>
+            <li>
+              <strong>Attention branch:</strong> channel attention guided by
+              FFT features (scene-level context) and temporal attention guided
+              by DWT features (local motion cues), improving motion fidelity
+              under heavy compression.
+            </li>
+          </ul>
+          <p>
+            Let <code>h<sup>(l)</sup></code> denote the features at level
+            <code>l</code> after downsampling. PVQ-VAE applies
+            <strong>Lookup-Free Quantization</strong> at each level:
+          </p>
+          <ul>
+            <li>
+              Project features to a low-dimensional space and quantize each
+              dimension independently to ±1, forming a binary code
+              <code>q<sup>(l)</sup> ∈ {−1,1}<sup>log₂K</sup></code>.
+            </li>
+            <li>
+              Map the binary vector to a token index via binary encoding,
+              avoiding expensive embedding lookups and enabling
+              very large vocabularies.
+            </li>
+          </ul>
+          <p>
+            The quantized tokens are fused in a
+            <strong>coarse-to-fine pyramid</strong>:
+            coarse-level latents provide global context, which is upsampled
+            and added to finer-level tokens to progressively refine details.
+            The finest fused representation is decoded into video frames
+            using a lightweight decoder.
+          </p>
+          <p>
+            All tokens across levels are concatenated into a 1D sequence and
+            modeled with an <strong>autoregressive transformer prior</strong>,
+            capturing inter-level and temporal dependencies and enabling
+            efficient entropy coding of the latent space.
+          </p>
+
+          <div class="figure">
+            <!-- Replace with your own exported figure -->
+            <!-- <img src="assets/pvq_vae_architecture.png" alt="PVQ-VAE Architecture"> -->
+            <div>
+              <em>
+                (See Fig. 3 in the paper for the full encoder–decoder and
+                pyramidal quantization architecture.)
+              </em>
+            </div>
+          </div>
+        </section>
+
+        <section id="flux">
+          <h2><span>▸</span> FLUX-based 2D Supervision</h2>
+          <p>
+            To further improve perceptual fidelity, PVQ-VAE leverages a
+            pretrained high-resolution image VAE
+            <strong>(FLUX)</strong> as a 2D prior:
+          </p>
+          <ul>
+            <li>
+              The masked video is flattened into frames and reconstructed by
+              FLUX to obtain <code>X̂<sub>flux</sub></code>.
+            </li>
+            <li>
+              A shared 3D discriminator processes
+              <code>X</code> (original video),
+              <code>X̂<sub>flux</sub></code>, and
+              <code>X̂</code> (PVQ-VAE reconstruction).
+            </li>
+            <li>
+              A <strong>contrastive discriminative loss</strong> aligns FLUX
+              reconstructions with the original video while encouraging PVQ-VAE
+              to match these high-quality features, transferring
+              high-frequency image priors into video.
+            </li>
+          </ul>
+          <p>
+            The final objective combines reconstruction losses
+            (SSIM, L1, LPIPS), FLUX alignment, contrastive adversarial loss,
+            autoregressive prior loss, and codebook regularization to balance
+            rate, distortion, and perceptual quality.
+          </p>
+        </section>
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div>
+        <section id="highlights">
+          <h2><span>★</span> Highlights</h2>
+          <ul>
+            <li>
+              <strong>Frequency-aware video tokenizer:</strong> integrates FFT
+              and DWT into the encoder and decoder, capturing global structure
+              and fine details beyond pure convolutional features.
+            </li>
+            <li>
+              <strong>Pyramidal Vector Quantization (PVQ):</strong> hierarchical
+              multi-resolution quantization that yields compact yet expressive
+              discrete latents with coarse-to-fine refinement.
+            </li>
+            <li>
+              <strong>Lookup-Free Quantization (LFQ):</strong> binary
+              codewords enable large vocabularies, better alignment with
+              language models, and efficient tokenization.
+            </li>
+            <li>
+              <strong>Autoregressive token prior:</strong> transformer prior
+              over all levels captures inter-token dependencies and improves
+              entropy coding and temporal coherence.
+            </li>
+            <li>
+              <strong>FLUX-based 2D supervision:</strong> contrastive loss with
+              a frozen image VAE transfers high-resolution image priors to
+              video, improving sharpness and semantic alignment.
+            </li>
+            <li>
+              <strong>High compression:</strong> up to 32× spatial and 16×
+              temporal compression while retaining sharp visual quality.
+            </li>
+          </ul>
+        </section>
+
+        <section id="results">
+          <h2><span>▸</span> Quantitative Results</h2>
+          <p>
+            PVQ-VAE achieves <strong>state-of-the-art frame reconstruction</strong>
+            on WebVid-val, COCO-val, and MCL-JCV under strong compression.
+          </p>
+
+          <div class="metric-grid">
+            <div class="metric-card">
+              <div class="metric-label">WebVid-val</div>
+              <div class="metric-main">36.01 PSNR</div>
+              <div class="metric-sub">
+                vs. 32.11 PSNR for 3D-MBQ-VAE at similar compression.
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">COCO-val</div>
+              <div class="metric-main">35.12 PSNR</div>
+              <div class="metric-sub">
+                with higher SSIM and lower LPIPS than baselines.
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">MCL-JCV (bitrate ≈ 0.034)</div>
+              <div class="metric-main">31.12 PSNR</div>
+              <div class="metric-sub">
+                31.12 / 0.941 / 0.083 (PSNR / SSIM / LPIPS),
+                outperforming 3D-MBQ-VAE (29.09 / 0.922 / 0.089).
+              </div>
+            </div>
+          </div>
+
+          <p style="margin-top:0.8rem;">
+            On COCO-val and WebVid-val, PVQ-VAE consistently outperforms
+            VAE-SD2.1, VQ-GAN, TATS, CogVideoX-VAE, OD-VAE, CV-VAE,
+            and 3D-MBQ-VAE across PSNR, SSIM, and LPIPS while having a faster
+            decoder and competitive parameter count.
+          </p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>COCO-val<br />PSNR / SSIM / LPIPS</th>
+                <th>WebVid-val<br />PSNR / SSIM / LPIPS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>3D-MBQ-VAE</td>
+                <td>33.00 / 0.848 / 0.092</td>
+                <td>32.11 / 0.858 / 0.108</td>
+              </tr>
+              <tr>
+                <td><strong>PVQ-VAE (Ours)</strong></td>
+                <td><strong>35.12 / 0.877 / 0.067</strong></td>
+                <td><strong>36.01 / 0.881 / 0.072</strong></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="figure">
+            <em>
+              See Tables 1 and 2 in the paper for full comparisons and
+              Tables 3–4/Figs. 4–9 for ablations and qualitative results.
+            </em>
+          </div>
+        </section>
+
+        <section id="qualitative">
+          <h2><span>▸</span> Qualitative Results</h2>
+          <p>
+            PVQ-VAE preserves <strong>sharp edges, textures, and motion</strong>
+            even under large compression ratios:
+          </p>
+          <ul>
+            <li>
+              Dynamic scenes (e.g., driving, animals) maintain clear motion
+              boundaries, lane markings, and fine details where baselines are
+              noticeably blurred.
+            </li>
+            <li>
+              t-SNE visualizations show that PVQ-VAE latents form
+              <em>well-separated clusters</em>, indicating stronger semantic
+              organization than competing VAEs.
+            </li>
+            <li>
+              Drop-in replacement for CogVideoX and MotionAura improves
+              text-to-video quality, with richer textures (hair, foliage,
+              backgrounds) and more coherent motion.
+            </li>
+          </ul>
+          <div class="figure">
+            <!-- <img src="assets/pvq_vae_reconstructions.png" alt="PVQ-VAE qualitative reconstructions"> -->
+            <em>
+              (See Figs. 4–7 in the paper for reconstruction and
+              text-to-video examples.)
+            </em>
+          </div>
+        </section>
+
+        <section id="bibtex">
+          <h2><span>▸</span> Citation</h2>
+          <p>
+            If you find this work useful, please cite:
+          </p>
+          <pre><code>@inproceedings{prakash2026pvqvae,
+  title     = {Pyramidal Spectrum: Frequency-based Hierarchically
+               Vector Quantized VAE for Videos},
+  author    = {Prakash, Tushar and Susladkar, Onkar and
+               Dhillon, Inderjit S. and Mittal, Sparsh},
+  booktitle = {Proceedings of the IEEE/CVF Winter Conference on
+               Applications of Computer Vision (WACV)},
+  year      = {2026}
+}</code></pre>
+        </section>
+      </div>
+    </main>
+
+    <footer>
+      † Main Contributors &amp; Shared First Authors.
+      <br />
+      Project page template · Last updated: <!-- fill date -->
+    </footer>
+  </div>
+</body>
+</html>
