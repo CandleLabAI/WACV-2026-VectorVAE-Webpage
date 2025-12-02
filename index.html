@@ -2,672 +2,738 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Pyramidal Spectrum (PVQ-VAE) – WACV 2026</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta
-    name="description"
-    content="Pyramidal Spectrum: Frequency-based Hierarchically Vector Quantized VAE for Videos (PVQ-VAE), a frequency-aware video tokenizer with pyramidal vector quantization and lookup-free codebooks."
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PVQ-VAE: Pyramidal Spectrum – WACV 2026</title>
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans:400,500,700|Noto+Sans:400,700|Castoro" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.4/css/academicons.min.css" />
   <style>
-    :root {
-      --bg: #fafafa;
-      --bg-card: #ffffff;
-      --fg: #111827;
-      --fg-muted: #4b5563;
-      --border-subtle: #e5e7eb;
-      --shadow-soft: 0 1px 4px rgba(15, 23, 42, 0.08);
-      --radius-xl: 0.9rem;
-      --accent: #4f46e5;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #020617;
-        --bg-card: #020617;
-        --fg: #e5e7eb;
-        --fg-muted: #9ca3af;
-        --border-subtle: #111827;
-        --shadow-soft: 0 1px 10px rgba(15, 23, 42, 0.9);
-        --accent: #818cf8;
-      }
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
+    /* Base Styles */
     body {
+      font-family: 'Google Sans', sans-serif;
+      background-color: #f4f4f4;
       margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-        "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #e5e7eb33, transparent 50%),
-        var(--bg);
-      color: var(--fg);
-      line-height: 1.6;
-    }
-
-    .page {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 2.5rem 1.25rem 4rem;
-    }
-
-    header {
+      padding: 20px;
       text-align: center;
-      margin-bottom: 2.5rem;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+      text-align: center;
     }
 
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      padding: 0.15rem 0.65rem;
-      border-radius: 999px;
-      background: rgba(79, 70, 229, 0.08);
-      border: 1px solid rgba(79, 70, 229, 0.15);
-      color: var(--accent);
-      font-size: 0.72rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      margin-bottom: 0.6rem;
-    }
-
-    h1 {
-      font-size: clamp(1.9rem, 3vw, 2.4rem);
-      margin: 0 0 0.5rem;
-    }
-
-    h1 em {
-      font-style: normal;
-      font-weight: 500;
-      color: var(--accent);
+    .title {
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+      color: #202124;
     }
 
     .subtitle {
-      margin: 0.2rem 0 0.5rem;
-      color: var(--fg-muted);
-      font-size: 0.95rem;
+      font-size: 1.1rem;
+      color: #5f6368;
+      max-width: 900px;
+      margin: 0 auto 1.5rem;
     }
 
-    .authors,
-    .affiliations {
-      margin: 0.4rem 0;
-      font-size: 0.95rem;
+    /* Authors & Affiliations Styles */
+    .authors {
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
     }
-
-    .authors span,
-    .affiliations span {
-      white-space: nowrap;
-    }
-
-    .links {
-      margin-top: 0.9rem;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 0.5rem;
-    }
-
-    .links a {
+    
+    .author-name {
+      color: #4285f4;
       text-decoration: none;
-      font-size: 0.88rem;
-      padding: 0.45rem 0.8rem;
-      border-radius: 999px;
-      border: 1px solid var(--border-subtle);
-      background: rgba(255, 255, 255, 0.5);
-      color: var(--fg);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      box-shadow: var(--shadow-soft);
+      margin: 0 0.2rem;
     }
-
-    .links a.primary {
-      border-color: transparent;
-      background: linear-gradient(135deg, #4f46e5, #6366f1);
-      color: #f9fafb;
-    }
-
-    .links a span.icon {
+    
+    .affiliations {
+      margin-bottom: 1.5rem;
+      color: #5f6368;
       font-size: 1rem;
     }
 
-    main {
-      display: grid;
-      grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.1fr);
-      gap: 1.75rem;
-      align-items: start;
-    }
-
-    @media (max-width: 880px) {
-      main {
-        grid-template-columns: minmax(0, 1fr);
-      }
-    }
-
-    section {
-      background: var(--bg-card);
-      border-radius: var(--radius-xl);
-      border: 1px solid var(--border-subtle);
-      padding: 1.5rem 1.3rem;
-      box-shadow: var(--shadow-soft);
-      margin-bottom: 1.25rem;
-    }
-
-    section h2 {
-      margin-top: 0;
-      font-size: 1.25rem;
-      display: flex;
-      align-items: center;
-      gap: 0.45rem;
-    }
-
-    section h2 span {
-      font-size: 1.1rem;
-      opacity: 0.7;
-    }
-
-    p {
-      margin: 0.4rem 0;
-      font-size: 0.96rem;
-    }
-
-    ul {
-      padding-left: 1.2rem;
-      margin: 0.4rem 0;
+    .note {
+      margin-bottom: 1.5rem;
+      color: #5f6368;
       font-size: 0.95rem;
     }
 
-    li + li {
-      margin-top: 0.18rem;
+    .conference-badge {
+      display: inline-block;
+      margin-bottom: 0.8rem;
+      padding: 0.3rem 0.9rem;
+      border-radius: 999px;
+      background: #e8f0fe;
+      color: #1a73e8;
+      font-size: 0.9rem;
+      font-weight: 500;
     }
 
-    .pill-row {
+    /* Button Styles */
+    .links {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.35rem;
-      margin-top: 0.4rem;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 3rem;
+    }
+    
+    .button {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.5rem 1.2rem;
+      background-color: #202124;
+      color: white;
+      text-decoration: none;
+      border-radius: 2rem;
+      font-size: 0.9rem;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+    
+    .button.primary {
+      background: linear-gradient(90deg, #1a73e8, #4285f4);
     }
 
-    .pill {
-      font-size: 0.78rem;
-      padding: 0.18rem 0.55rem;
-      border-radius: 999px;
-      border: 1px solid var(--border-subtle);
-      background: rgba(15, 23, 42, 0.02);
-      color: var(--fg-muted);
-      white-space: nowrap;
+    .button:hover {
+      background-color: #4285f4;
+      transform: translateY(-1px);
+    }
+    
+    .button i {
+      margin-right: 0.5rem;
     }
 
-    .figure {
-      margin-top: 0.7rem;
-      text-align: center;
-      font-size: 0.86rem;
-      color: var(--fg-muted);
-    }
-
-    .figure img {
-      max-width: 100%;
-      border-radius: 0.6rem;
-      border: 1px solid var(--border-subtle);
-      box-shadow: var(--shadow-soft);
-    }
-
-    .metric-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
-      gap: 0.6rem;
-      margin-top: 0.7rem;
-    }
-
-    .metric-card {
-      border-radius: 0.75rem;
-      border: 1px solid var(--border-subtle);
-      padding: 0.6rem 0.7rem;
-      font-size: 0.86rem;
-      background: radial-gradient(circle at top left, #e5e7eb33, transparent),
-        var(--bg-card);
-    }
-
-    .metric-label {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--fg-muted);
-      margin-bottom: 0.2rem;
-    }
-
-    .metric-main {
-      font-weight: 600;
-      font-size: 1.02rem;
-    }
-
-    .metric-sub {
-      font-size: 0.8rem;
-      color: var(--fg-muted);
-      margin-top: 0.15rem;
-    }
-
-    table {
+    /* Hero / Intro Video */
+    .intro-video {
       width: 100%;
-      border-collapse: collapse;
-      font-size: 0.86rem;
-      margin-top: 0.6rem;
+      max-width: 900px;
+      height: auto;
+      margin: 0 auto 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      background: #000;
     }
 
-    th,
-    td {
-      border: 1px solid var(--border-subtle);
-      padding: 0.3rem 0.45rem;
-      text-align: center;
+    /* Section Styles */
+    .section {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 2rem;
     }
 
-    th {
-      font-weight: 600;
-      background: rgba(15, 23, 42, 0.025);
+    .section-title {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      color: #202124;
     }
 
-    code,
-    pre {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-        "Liberation Mono", "Courier New", monospace;
-      font-size: 0.84rem;
-      background: rgba(15, 23, 42, 0.04);
-      border-radius: 0.6rem;
+    .section-subtitle {
+      font-size: 1rem;
+      color: #5f6368;
+      max-width: 900px;
+      margin: 0 auto 1.4rem;
     }
 
-    pre {
-      padding: 0.75rem 0.9rem;
+    .caption {
+      text-align: justify;
+      padding: 1rem;
+      background: #f8f9fa;
+      color: #555;
+      font-size: 0.95rem;
+      margin: 0;
+      border-radius: 0 0 8px 8px;
+    }
+
+    /* Comparison Layout (Main + side qualitative images) */
+    .comparison-section {
+      max-width: 1200px;
+      margin: 3rem auto;
+      padding: 0 2rem;
+    }
+
+    .comparison-container {
+      display: flex;
+      gap: 2rem;
+      flex-direction: column;
+    }
+
+    @media (min-width: 900px) {
+      .comparison-container {
+        flex-direction: row;
+        align-items: flex-start;
+      }
+    }
+
+    .main-video {
+      flex: 1.6;
+      min-width: 50%;
+    }
+
+    .main-video video {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      border-radius: 8px 8px 0 0;
+      background-color: #000;
+    }
+
+    .comparison-column {
+      flex: 1;
+      min-width: 38%;
+      display: flex;
+      flex-direction: column;
+      gap: 1.6rem;
+    }
+
+    .comparison-item {
+      position: relative;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .comparison-item img,
+    .comparison-item video {
+      width: 100%;
+      height: auto;
+      display: block;
+      aspect-ratio: 16/9;
+      object-fit: contain;
+      background-color: #000;
+    }
+
+    @media (max-width: 768px) {
+      .main-video,
+      .comparison-column {
+        width: 100%;
+      }
+      
+      .main-video video {
+        aspect-ratio: 16/9;
+      }
+    }
+
+    /* Generic Slider Styles (for qualitative galleries) */
+    .slider-container {
+      width: 90%;
+      max-width: 1200px;
+      margin: 2.5rem auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .slider-container h2 {
+      margin-top: 0;
+      margin-bottom: 0.3rem;
+    }
+
+    .slider-container p.section-subtitle {
+      margin-top: 0;
+      margin-bottom: 1rem;
+    }
+
+    .slider {
+      display: flex;
       overflow-x: auto;
-      margin: 0.5rem 0;
-      border: 1px solid var(--border-subtle);
+      scroll-behavior: smooth;
+      padding: 10px;
+    }
+
+    .slide {
+      min-width: 300px;
+      margin: 10px;
+      background: #fff;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .slide video,
+    .slide img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 5px;
+      background: #000;
+    }
+
+    .slide p {
+      font-size: 14px;
+      margin-top: 10px;
+      color: #333;
+      padding: 5px;
+      text-align: justify;
+    }
+
+    /* 10-second Showcase Slider (no text) */
+    .ten-slider-container {
+      width: 90%;
+      max-width: 1200px;
+      margin: 2.5rem auto 3.5rem;
+      overflow: hidden;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .ten-slider-container h2 {
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+    }
+
+    .ten-slider {
+      display: flex;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      padding: 10px;
+    }
+
+    .ten-slide {
+      min-width: 320px;
+      margin: 10px;
+      background: #fff;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .ten-slide video {
+      width: 100%;
+      display: block;
+      border-radius: 5px;
+      background: #000;
+    }
+
+    /* Architecture Section */
+    .model-architecture {
+      max-width: 1100px;
+      margin: 3rem auto;
+      text-align: center;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .model-architecture img {
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.12);
+    }
+
+    .architecture-caption {
+      margin-top: 1rem;
+      font-size: 0.98rem;
+      color: #555;
+      text-align: justify;
+      line-height: 1.5;
+      padding: 0 10px;
+    }
+
+    .model-architecture-side {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      max-width: 1100px;
+      margin: 3rem auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      gap: 20px;
+    }
+
+    .model-architecture-side img {
+      width: 50%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.12);
+    }
+
+    .architecture-caption-side {
+      width: 50%;
+      font-size: 0.98rem;
+      color: #555;
+      text-align: justify;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 900px) {
+      .model-architecture-side {
+        flex-direction: column;
+      }
+      .model-architecture-side img,
+      .architecture-caption-side {
+        width: 100%;
+      }
+    }
+
+    /* Abstract text */
+    .abstract {
+      max-width: 900px;
+      margin: 0 auto 2rem;
+    }
+
+    .abstract p {
+      text-align: justify;
+      font-size: 0.98rem;
+      color: #444;
+    }
+
+    /* Citation Section */
+    .citation-section {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+      text-align: left;
+    }
+
+    .citation-section h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: #202124;
+    }
+
+    .bibtex-block {
+      background-color: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 1rem;
+      font-family: monospace;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+      overflow-x: auto;
+      color: #333;
     }
 
     footer {
       margin-top: 2rem;
-      text-align: center;
-      font-size: 0.82rem;
-      color: var(--fg-muted);
+      padding-bottom: 0.5rem;
+      font-size: 0.9rem;
+      color: #777;
     }
 
-    a {
-      color: var(--accent);
+    footer a {
+      color: #1a73e8;
+      text-decoration: none;
     }
 
-    a:hover {
+    footer a:hover {
       text-decoration: underline;
     }
+
   </style>
 </head>
 <body>
-  <div class="page">
-    <header>
-      <div class="badge">
-        <span>WACV 2026</span> · <span>Video Generation</span>
-      </div>
-      <h1>
-        Pyramidal Spectrum: Frequency-based Hierarchically Vector Quantized
-        VAE for Videos <em>(PVQ-VAE)</em>
-      </h1>
-      <p class="subtitle">
-        A frequency-aware, pyramidal vector-quantized VAE for high-fidelity,
-        highly-compressed video latents.
+  <div class="container">
+    <div class="conference-badge">WACV 2026</div>
+    <h1 class="title">Pyramidal Spectrum: Frequency-based Hierarchically Vector Quantized VAE for Videos (PVQ-VAE)</h1>
+    <p class="subtitle">
+      A frequency-aware, pyramidal vector-quantized VAE that combines FFT + DWT, lookup-free quantization, and a coarse-to-fine latent hierarchy to produce high-fidelity video reconstructions under strong compression.
+    </p>
+    
+    <div class="authors">
+      <a href="#" class="author-name">Tushar Prakash<sup>1,6,†</sup></a>,
+      <a href="#" class="author-name">Onkar Susladkar<sup>2,†</sup></a>,
+      <a href="#" class="author-name">Inderjit S. Dhillon<sup>3,5</sup></a>,
+      <a href="#" class="author-name">Sparsh Mittal<sup>4</sup></a>
+    </div>
+
+    <div class="affiliations">
+      <sup>1</sup>DTU,
+      <sup>2</sup>UIUC,
+      <sup>3</sup>UT Austin,
+      <sup>4</sup>IIT Roorkee,
+      <sup>5</sup>Google Research,
+      <sup>6</sup>Sony Research India
+    </div>
+
+    <div class="note">
+      †Equal contribution. Please see the paper for full author &amp; affiliation details.
+    </div>
+
+    <div class="links">
+      <!-- Replace # with actual links -->
+      <a href="#" class="button primary">
+        <i class="fas fa-file-pdf"></i>
+        Paper
+      </a>
+      <a href="#" class="button">
+        <i class="ai ai-arxiv"></i>
+        arXiv
+      </a>
+      <a href="https://github.com/CandleLabAI/WACV-2026-VectorVAE-Webpage" class="button">
+        <i class="fab fa-github"></i>
+        Code
+      </a>
+      <a href="#" class="button">
+        <i class="fas fa-video"></i>
+        Talk / Teaser
+      </a>
+    </div>
+
+    <!-- Hero qualitative collage or teaser -->
+    <video class="intro-video" controls>
+      <!-- e.g., static/videos/pvqvae_teaser.mp4 -->
+      <source src="static/videos/pvq_teaser.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+
+    <div class="abstract">
+      <h2 class="section-title">Abstract</h2>
+      <p>
+        Video VAEs compress high-dimensional spatiotemporal signals into latent spaces used by generative models and codecs.
+        However, standard convolutional VAEs and vector-quantized models struggle to capture both global structure and fine,
+        high-frequency details under strong compression, and typically quantize at a single resolution.
       </p>
-      <p class="authors">
-        <strong>Tushar Prakash</strong><sup>1,6,†</sup>,
-        <strong>Onkar Susladkar</strong><sup>2,†</sup>,
-        <strong>Inderjit S. Dhillon</strong><sup>3,5</sup>,
-        <strong>Sparsh Mittal</strong><sup>4</sup>
+      <p>
+        <strong>PVQ-VAE</strong> introduces a <em>frequency-aware</em> encoder–decoder coupled with
+        <strong>Pyramidal Vector Quantization (PVQ)</strong>, a hierarchical multi-resolution quantization scheme.
+        The encoder integrates 2D FFT and 2D DWT branches to model global semantics and multi-scale local details,
+        while lookup-free binary quantization at each level produces discrete video tokens suitable for autoregressive priors.
+        A coarse-to-fine decoder progressively refines reconstructions from global layout to high-frequency textures.
       </p>
-      <p class="affiliations">
-        <sup>1</sup>DTU · <sup>2</sup>UIUC · <sup>3</sup>UT Austin ·
-        <sup>4</sup>IIT Roorkee · <sup>5</sup>Google Research ·
-        <sup>6</sup>Sony Research India
+      <p>
+        On WebVid-val, COCO-val, and MCL-JCV, PVQ-VAE achieves state-of-the-art PSNR/SSIM/LPIPS at up to
+        <strong>32× spatial</strong> and <strong>16× temporal</strong> compression, and improves text-to-video quality
+        when used as a drop-in tokenizer in existing pipelines.
       </p>
+    </div>
+  </div>
 
-      <div class="links">
-        <!-- TODO: Replace the # with real links (arXiv, video, etc.) -->
-        <a class="primary" href="#" target="_blank" rel="noreferrer">
-          <span class="icon">📄</span>
-          <span>Paper (PDF / arXiv)</span>
-        </a>
-        <a
-          href="https://github.com/CandleLabAI/WACV-2026-VectorVAE-Webpage"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <span class="icon">💻</span>
-          <span>Code &amp; Project Repo</span>
-        </a>
-        <a href="#" target="_blank" rel="noreferrer">
-          <span class="icon">🎥</span>
-          <span>Teaser Video</span>
-        </a>
-        <a href="#" target="_blank" rel="noreferrer">
-          <span class="icon">🖼️</span>
-          <span>Poster / Slides</span>
-        </a>
-        <a href="mailto:tushar121prakash@gmail.com">
-          <span class="icon">✉️</span>
-          <span>Contact</span>
-        </a>
-      </div>
-    </header>
+  <!-- QUALITATIVE FOCUS SECTIONS -->
 
-    <main>
-      <!-- LEFT COLUMN -->
-      <div>
-        <section id="abstract">
-          <h2><span>▸</span> Abstract</h2>
-          <p>
-            Modern text-to-video and video generation models rely on strong
-            video VAEs that compress high-dimensional spatiotemporal signals
-            into compact latents. Discrete latent VAEs with vector
-            quantization are particularly attractive for their perceptual
-            sharpness and compatibility with token-based transformers — but
-            current designs lack frequency-domain modeling and use fixed
-            single-resolution quantization, limiting their ability to capture
-            coarse-to-fine video structure.
+  <!-- 1. Reconstruction & Compression Comparisons -->
+  <div class="comparison-section">
+    <h2 class="section-title">Qualitative Reconstruction Under Strong Compression</h2>
+    <p class="section-subtitle">
+      PVQ-VAE preserves sharp edges, textures, and motion boundaries where prior VAEs blur or wash out details.
+      Below we compare reconstructions at high compression ratios against 3D-MBQ-VAE and other baselines.
+    </p>
+    <div class="comparison-container">
+      <!-- Left: main collage / video -->
+      <div class="main-video">
+        <div class="comparison-item">
+          <video controls>
+            <!-- e.g., static/videos/pvq_recon_collage.mp4 -->
+            <source src="static/videos/pvq_recon_collage.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+          <p class="caption">
+            Reconstructions on diverse scenes (driving, indoor, nature, human motion) at high compression.
+            PVQ-VAE maintains straight lines, lane markings, foliage, and texture while competing methods exhibit blur and ghosting.
           </p>
-          <p>
-            <strong>PVQ-VAE</strong> addresses these limitations with a
-            frequency-aware encoder–decoder and
-            <strong>Pyramidal Vector Quantization</strong>, a hierarchical
-            quantization strategy that discretizes features at multiple
-            resolutions. The encoder integrates
-            <em>Fast Fourier Transform (FFT)</em> and
-            <em>Discrete Wavelet Transform (DWT)</em> to jointly capture
-            global semantics and multi-scale local details, enabling up to
-            <strong>32× spatial</strong> and <strong>16× temporal</strong>
-            compression while preserving sharp textures and motion.
-          </p>
-          <p>
-            PVQ-VAE further employs <em>Lookup-Free Quantization (LFQ)</em>
-            with a large binary codebook, an autoregressive transformer prior
-            over latent tokens, and a cross-modal contrastive loss guided by a
-            pretrained high-resolution image VAE (FLUX) to transfer
-            fine-grained image priors into video. The result is a compact
-            yet expressive video tokenizer that delivers
-            <strong>state-of-the-art reconstruction quality</strong> on
-            WebVid-val, COCO-val, and MCL-JCV under strong compression.
-          </p>
-          <div class="pill-row">
-            <div class="pill">Discrete latent video VAE</div>
-            <div class="pill">FFT + DWT frequency modeling</div>
-            <div class="pill">Pyramidal Vector Quantization</div>
-            <div class="pill">Lookup-Free Quantization (LFQ)</div>
-            <div class="pill">Autoregressive latent prior</div>
-            <div class="pill">FLUX-based 2D supervision</div>
-          </div>
-        </section>
-
-        <section id="method">
-          <h2><span>▸</span> Method Overview</h2>
-          <p>
-            PVQ-VAE is a hierarchical, frequency-aware video VAE that encodes
-            an input video into multi-scale discrete latents. Each encoder
-            block combines three complementary branches:
-          </p>
-          <ul>
-            <li>
-              <strong>FFT branch:</strong> performs per-frame 2D FFT, uses a
-              learnable frequency mixer and temporal convolution to model
-              <em>global scene structure</em>, long-range patterns, and
-              redundant low-frequency content.
-            </li>
-            <li>
-              <strong>DWT branch:</strong> applies orthogonal 2D DWT (Haar)
-              into LL / LH / HL / HH bands to capture
-              <em>scale-aware, localized details</em> such as edges, textures
-              and motion boundaries across multiple resolutions.
-            </li>
-            <li>
-              <strong>Attention branch:</strong> channel attention guided by
-              FFT features (scene-level context) and temporal attention guided
-              by DWT features (local motion cues), improving motion fidelity
-              under heavy compression.
-            </li>
-          </ul>
-          <p>
-            Let <code>h<sup>(l)</sup></code> denote the features at level
-            <code>l</code> after downsampling. PVQ-VAE applies
-            <strong>Lookup-Free Quantization</strong> at each level:
-          </p>
-          <ul>
-            <li>
-              Project features to a low-dimensional space and quantize each
-              dimension independently to ±1, forming a binary code
-              <code>q<sup>(l)</sup> ∈ {−1,1}<sup>log₂K</sup></code>.
-            </li>
-            <li>
-              Map the binary vector to a token index via binary encoding,
-              avoiding expensive embedding lookups and enabling
-              very large vocabularies.
-            </li>
-          </ul>
-          <p>
-            The quantized tokens are fused in a
-            <strong>coarse-to-fine pyramid</strong>:
-            coarse-level latents provide global context, which is upsampled
-            and added to finer-level tokens to progressively refine details.
-            The finest fused representation is decoded into video frames
-            using a lightweight decoder.
-          </p>
-          <p>
-            All tokens across levels are concatenated into a 1D sequence and
-            modeled with an <strong>autoregressive transformer prior</strong>,
-            capturing inter-level and temporal dependencies and enabling
-            efficient entropy coding of the latent space.
-          </p>
-
-          <div class="figure">
-            <!-- Replace with your own exported figure -->
-            <!-- <img src="assets/pvq_vae_architecture.png" alt="PVQ-VAE Architecture"> -->
-            <div>
-              <em>
-                (See Fig. 3 in the paper for the full encoder–decoder and
-                pyramidal quantization architecture.)
-              </em>
-            </div>
-          </div>
-        </section>
-
-        <section id="flux">
-          <h2><span>▸</span> FLUX-based 2D Supervision</h2>
-          <p>
-            To further improve perceptual fidelity, PVQ-VAE leverages a
-            pretrained high-resolution image VAE
-            <strong>(FLUX)</strong> as a 2D prior:
-          </p>
-          <ul>
-            <li>
-              The masked video is flattened into frames and reconstructed by
-              FLUX to obtain <code>X̂<sub>flux</sub></code>.
-            </li>
-            <li>
-              A shared 3D discriminator processes
-              <code>X</code> (original video),
-              <code>X̂<sub>flux</sub></code>, and
-              <code>X̂</code> (PVQ-VAE reconstruction).
-            </li>
-            <li>
-              A <strong>contrastive discriminative loss</strong> aligns FLUX
-              reconstructions with the original video while encouraging PVQ-VAE
-              to match these high-quality features, transferring
-              high-frequency image priors into video.
-            </li>
-          </ul>
-          <p>
-            The final objective combines reconstruction losses
-            (SSIM, L1, LPIPS), FLUX alignment, contrastive adversarial loss,
-            autoregressive prior loss, and codebook regularization to balance
-            rate, distortion, and perceptual quality.
-          </p>
-        </section>
+        </div>
       </div>
 
-      <!-- RIGHT COLUMN -->
-      <div>
-        <section id="highlights">
-          <h2><span>★</span> Highlights</h2>
-          <ul>
-            <li>
-              <strong>Frequency-aware video tokenizer:</strong> integrates FFT
-              and DWT into the encoder and decoder, capturing global structure
-              and fine details beyond pure convolutional features.
-            </li>
-            <li>
-              <strong>Pyramidal Vector Quantization (PVQ):</strong> hierarchical
-              multi-resolution quantization that yields compact yet expressive
-              discrete latents with coarse-to-fine refinement.
-            </li>
-            <li>
-              <strong>Lookup-Free Quantization (LFQ):</strong> binary
-              codewords enable large vocabularies, better alignment with
-              language models, and efficient tokenization.
-            </li>
-            <li>
-              <strong>Autoregressive token prior:</strong> transformer prior
-              over all levels captures inter-token dependencies and improves
-              entropy coding and temporal coherence.
-            </li>
-            <li>
-              <strong>FLUX-based 2D supervision:</strong> contrastive loss with
-              a frozen image VAE transfers high-resolution image priors to
-              video, improving sharpness and semantic alignment.
-            </li>
-            <li>
-              <strong>High compression:</strong> up to 32× spatial and 16×
-              temporal compression while retaining sharp visual quality.
-            </li>
-          </ul>
-        </section>
-
-        <section id="results">
-          <h2><span>▸</span> Quantitative Results</h2>
-          <p>
-            PVQ-VAE achieves <strong>state-of-the-art frame reconstruction</strong>
-            on WebVid-val, COCO-val, and MCL-JCV under strong compression.
+      <!-- Right: static comparison figures -->
+      <div class="comparison-column">
+        <div class="comparison-item">
+          <!-- e.g., static/images/recon_grid1.png -->
+          <img src="static/images/recon_grid_1.png" alt="Qualitative comparison grid 1">
+          <p class="caption">
+            Frame-wise reconstruction comparison on WebVid-val.
+            Each group shows the original frame, 3D-MBQ-VAE, CogVideoX-VAE, and PVQ-VAE. Note the sharper textures and better
+            preservation of background structures in PVQ-VAE outputs.
           </p>
-
-          <div class="metric-grid">
-            <div class="metric-card">
-              <div class="metric-label">WebVid-val</div>
-              <div class="metric-main">36.01 PSNR</div>
-              <div class="metric-sub">
-                vs. 32.11 PSNR for 3D-MBQ-VAE at similar compression.
-              </div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-label">COCO-val</div>
-              <div class="metric-main">35.12 PSNR</div>
-              <div class="metric-sub">
-                with higher SSIM and lower LPIPS than baselines.
-              </div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-label">MCL-JCV (bitrate ≈ 0.034)</div>
-              <div class="metric-main">31.12 PSNR</div>
-              <div class="metric-sub">
-                31.12 / 0.941 / 0.083 (PSNR / SSIM / LPIPS),
-                outperforming 3D-MBQ-VAE (29.09 / 0.922 / 0.089).
-              </div>
-            </div>
-          </div>
-
-          <p style="margin-top:0.8rem;">
-            On COCO-val and WebVid-val, PVQ-VAE consistently outperforms
-            VAE-SD2.1, VQ-GAN, TATS, CogVideoX-VAE, OD-VAE, CV-VAE,
-            and 3D-MBQ-VAE across PSNR, SSIM, and LPIPS while having a faster
-            decoder and competitive parameter count.
+        </div>
+        <div class="comparison-item">
+          <!-- e.g., static/images/recon_grid2.png -->
+          <img src="static/images/recon_grid_2.png" alt="Qualitative comparison grid 2">
+          <p class="caption">
+            Zoomed-in crops highlight PVQ-VAE's ability to retain small-scale details such as facial features, text, and repetitive patterns
+            under the same bitrate as prior VAEs.
           </p>
+        </div>
+      </div>
+    </div>
+  </div>
 
-          <table>
-            <thead>
-              <tr>
-                <th>Method</th>
-                <th>COCO-val<br />PSNR / SSIM / LPIPS</th>
-                <th>WebVid-val<br />PSNR / SSIM / LPIPS</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>3D-MBQ-VAE</td>
-                <td>33.00 / 0.848 / 0.092</td>
-                <td>32.11 / 0.858 / 0.108</td>
-              </tr>
-              <tr>
-                <td><strong>PVQ-VAE (Ours)</strong></td>
-                <td><strong>35.12 / 0.877 / 0.067</strong></td>
-                <td><strong>36.01 / 0.881 / 0.072</strong></td>
-              </tr>
-            </tbody>
-          </table>
+  <!-- 2. Category-based qualitative sliders -->
+  <div class="slider-container">
+    <h2 class="section-title">Qualitative Results – Real-World & Driving Scenes</h2>
+    <p class="section-subtitle">
+      Examples from real-world driving and outdoor scenes. PVQ-VAE produces temporally coherent reconstructions
+      with stable geometry and fewer flickering artifacts.
+    </p>
+    <div class="slider">
+      <div class="slide">
+        <video controls src="static/videos/real_1_pvq.mp4"></video>
+        <p>
+          Urban driving scene. PVQ-VAE retains lane markings, car contours, and building edges 
+          while baseline reconstructions appear noticeably blurrier, especially in distant regions.
+        </p>
+      </div>
+      <div class="slide">
+        <video controls src="static/videos/real_2_pvq.mp4"></video>
+        <p>
+          Roadside foliage and trees. Edges remain sharp and flicker is reduced, highlighting the benefits of
+          frequency-aware modeling for repetitive textures.
+        </p>
+      </div>
+      <div class="slide">
+        <video controls src="static/videos/real_3_pvq.mp4"></video>
+        <p>
+          Low-light driving sequence. PVQ-VAE better preserves contrast and small light sources (headlights, signage)
+          compared to competing VAEs.
+        </p>
+      </div>
+    </div>
+  </div>
 
-          <div class="figure">
-            <em>
-              See Tables 1 and 2 in the paper for full comparisons and
-              Tables 3–4/Figs. 4–9 for ablations and qualitative results.
-            </em>
-          </div>
-        </section>
+  <div class="slider-container">
+    <h2 class="section-title">Qualitative Results – Human Motion & Complex Dynamics</h2>
+    <p class="section-subtitle">
+      Human-centric sequences with non-rigid motion and fine details such as hair, clothing folds, and small objects.
+    </p>
+    <div class="slider">
+      <div class="slide">
+        <video controls src="static/videos/human_1_pvq.mp4"></video>
+        <p>
+          Dancing sequence where PVQ-VAE maintains limb boundaries and fine texture on clothing,
+          avoiding the smearing commonly observed in prior VAEs.
+        </p>
+      </div>
+      <div class="slide">
+        <video controls src="static/videos/human_2_pvq.mp4"></video>
+        <p>
+          Close-up human motion with facial expressions. PVQ-VAE preserves facial features and
+          high-frequency details such as hair strands and eyes, resulting in sharper reconstructions.
+        </p>
+      </div>
+      <div class="slide">
+        <video controls src="static/videos/human_3_pvq.mp4"></video>
+        <p>
+          Sports scenario with fast motion. Despite rapid movement, PVQ-VAE retains object boundaries
+          with reduced trailing artifacts.
+        </p>
+      </div>
+    </div>
+  </div>
 
-        <section id="qualitative">
-          <h2><span>▸</span> Qualitative Results</h2>
-          <p>
-            PVQ-VAE preserves <strong>sharp edges, textures, and motion</strong>
-            even under large compression ratios:
-          </p>
-          <ul>
-            <li>
-              Dynamic scenes (e.g., driving, animals) maintain clear motion
-              boundaries, lane markings, and fine details where baselines are
-              noticeably blurred.
-            </li>
-            <li>
-              t-SNE visualizations show that PVQ-VAE latents form
-              <em>well-separated clusters</em>, indicating stronger semantic
-              organization than competing VAEs.
-            </li>
-            <li>
-              Drop-in replacement for CogVideoX and MotionAura improves
-              text-to-video quality, with richer textures (hair, foliage,
-              backgrounds) and more coherent motion.
-            </li>
-          </ul>
-          <div class="figure">
-            <!-- <img src="assets/pvq_vae_reconstructions.png" alt="PVQ-VAE qualitative reconstructions"> -->
-            <em>
-              (See Figs. 4–7 in the paper for reconstruction and
-              text-to-video examples.)
-            </em>
-          </div>
-        </section>
+  <div class="slider-container">
+    <h2 class="section-title">PVQ-VAE as a Drop-in Tokenizer for Text-to-Video</h2>
+    <p class="section-subtitle">
+      When used in a text-to-video pipeline, PVQ-VAE tokens yield richer textures and improved motion coherence compared to baseline video VAEs.
+    </p>
+    <div class="slider">
+      <div class="slide">
+        <video controls src="static/videos/t2v_1_pvq.mp4"></video>
+        <p>
+          Text prompt: <em>"A cat sitting on a windowsill overlooking a city at sunset."</em>
+          PVQ-VAE produces sharper city skylines and detailed fur textures while preserving temporal consistency across frames.
+        </p>
+      </div>
+      <div class="slide">
+        <video controls src="static/videos/t2v_2_pvq.mp4"></video>
+        <p>
+          Text prompt: <em>"A ship sailing through stormy seas."</em>
+          Fine-grained wave patterns and ship textures are better preserved, and global motion remains stable.
+        </p>
+      </div>
+      <div class="slide">
+        <video controls src="static/videos/t2v_3_pvq.mp4"></video>
+        <p>
+          Text prompt: <em>"A person walking through a neon-lit cyberpunk alley."</em>
+          PVQ-VAE captures neon lights and reflections with improved color fidelity and reduced noise.
+        </p>
+      </div>
+    </div>
+  </div>
 
-        <section id="bibtex">
-          <h2><span>▸</span> Citation</h2>
-          <p>
-            If you find this work useful, please cite:
-          </p>
-          <pre><code>@inproceedings{prakash2026pvqvae,
-  title     = {Pyramidal Spectrum: Frequency-based Hierarchically
-               Vector Quantized VAE for Videos},
+  <!-- 3. Long videos / 10s showcase -->
+  <div class="ten-slider-container">
+    <h2>10-Second Video Showcase</h2>
+    <p class="section-subtitle">
+      Longer sequences (≈10 seconds) reconstructed or generated using PVQ-VAE latents, illustrating stable
+      long-term dynamics and reduced temporal drift.
+    </p>
+    <div class="ten-slider">
+      <div class="ten-slide">
+        <video controls src="static/videos/10s_1_pvq.mp4"></video>
+      </div>
+      <div class="ten-slide">
+        <video controls src="static/videos/10s_2_pvq.mp4"></video>
+      </div>
+      <div class="ten-slide">
+        <video controls src="static/videos/10s_3_pvq.mp4"></video>
+      </div>
+      <div class="ten-slide">
+        <video controls src="static/videos/10s_4_pvq.mp4"></video>
+      </div>
+      <div class="ten-slide">
+        <video controls src="static/videos/10s_5_pvq.mp4"></video>
+      </div>
+      <div class="ten-slide">
+        <video controls src="static/videos/10s_6_pvq.mp4"></video>
+      </div>
+    </div>
+  </div>
+
+  <!-- Architecture (minimal, so page still feels qualitative-heavy) -->
+  <div class="model-architecture">
+    <!-- e.g., static/images/pvq_architecture.png -->
+    <img src="static/images/pvq_architecture.png" alt="PVQ-VAE Architecture">
+    <p class="architecture-caption">
+      High-level overview of PVQ-VAE. The encoder combines convolutional layers with FFT and DWT branches to model
+      global and local frequency components. Features are progressively downsampled and quantized at multiple scales
+      using lookup-free binary vector quantization. The resulting discrete tokens form a pyramid of latents, which are
+      fused in a coarse-to-fine manner and decoded into reconstructed frames. An autoregressive transformer prior
+      models token dependencies for entropy coding and generation.
+    </p>
+  </div>
+
+  <!-- (Optional) second architecture block, e.g., FLUX-based supervision or t-SNE -->
+  <div class="model-architecture-side">
+    <!-- e.g., static/images/pvq_tsne_flux.png -->
+    <img src="static/images/pvq_tsne_flux.png" alt="Latent organization and FLUX-based supervision">
+    <p class="architecture-caption-side">
+      Left: t-SNE visualization of PVQ-VAE discrete latents versus baselines, showing tighter and more semantically
+      meaningful clusters. Right: Illustration of FLUX-based 2D supervision, where a pretrained image VAE provides
+      high-quality frame reconstructions that guide PVQ-VAE via a shared discriminator and contrastive loss.
+    </p>
+  </div>
+
+  <!-- Citation -->
+  <section class="citation-section">
+    <h2>Citation</h2>
+    <p>If you find PVQ-VAE useful, please cite:</p>
+    <div class="bibtex-block">
+@inproceedings{prakash2026pvqvae,
+  title     = {Pyramidal Spectrum: Frequency-based Hierarchically Vector
+               Quantized VAE for Videos},
   author    = {Prakash, Tushar and Susladkar, Onkar and
                Dhillon, Inderjit S. and Mittal, Sparsh},
-  booktitle = {Proceedings of the IEEE/CVF Winter Conference on
-               Applications of Computer Vision (WACV)},
+  booktitle = {Proceedings of the IEEE/CVF Winter Conference on Applications
+               of Computer Vision (WACV)},
   year      = {2026}
-}</code></pre>
-        </section>
-      </div>
-    </main>
+}
+    </div>
+  </section>
 
-    <footer>
-      † Main Contributors &amp; Shared First Authors.
-      <br />
-      Project page template · Last updated: <!-- fill date -->
-    </footer>
-  </div>
+  <footer class="footer pt-4 pb-0">
+    <div class="container">
+      <p>
+        Website structure inspired by the MotionAura project page. Template based on
+        <a href="https://github.com/nerfies/nerfies.github.io">Nerfies</a> and licensed under
+        <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
+          CC-BY-SA-4.0
+        </a>.
+      </p>
+    </div>
+  </footer>
 </body>
 </html>
